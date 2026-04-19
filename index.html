@@ -5,17 +5,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#18171f">
 <title>Sudoku</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-html { background: #1c1b22; }
-
-body {
-background: #1c1b22;
+html, body {
+background: #18171f;
 color: #f0ebe0;
-font-family: -apple-system, ‘SF Pro Display’, sans-serif;
+font-family: -apple-system, ‘Helvetica Neue’, sans-serif;
 min-height: 100dvh;
 display: flex;
 flex-direction: column;
@@ -23,246 +21,174 @@ align-items: center;
 overflow-x: hidden;
 }
 
-.header {
+/* ── HEADER ── */
+.hdr {
 width: 100%;
-max-width: 420px;
+max-width: 440px;
 display: flex;
 justify-content: space-between;
-align-items: center;
-padding: 52px 20px 10px;
+align-items: flex-end;
+padding: 54px 18px 8px;
 }
+.logo { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: #fff; }
+.logo em { font-style: italic; color: #f5c542; }
+.hdr-r { text-align: right; }
+.timer { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+.dlabel { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #f5c542; }
 
-.logo {
-font-size: 30px;
-font-weight: 800;
-letter-spacing: -1px;
-color: #fff;
+/* ── DIFFICULTY ── */
+.drow {
+width: 100%; max-width: 440px;
+display: flex; gap: 8px;
+padding: 6px 16px 6px;
 }
-.logo span { color: #f5c542; }
+.dbtn {
+flex: 1; padding: 8px 0; border-radius: 10px;
+border: 1.5px solid #2e2c3a; background: #222130;
+color: #555; font-size: 11px; font-weight: 800;
+letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
+}
+.dbtn.on { background: #f5c542; color: #18171f; border-color: #f5c542; }
 
-.timer-box { text-align: right; }
-.timer {
-font-size: 22px;
-font-weight: 700;
-color: #fff;
-letter-spacing: 1px;
-font-variant-numeric: tabular-nums;
-}
-.diff-label {
-font-size: 10px;
-letter-spacing: 2px;
-text-transform: uppercase;
-color: #f5c542;
-font-weight: 600;
-}
-
-.diff-row {
-width: 100%;
-max-width: 420px;
-display: flex;
-gap: 8px;
-padding: 6px 16px;
-}
-
-.diff-btn {
-flex: 1;
-padding: 8px 0;
-border-radius: 10px;
-border: none;
-font-size: 11px;
-font-weight: 700;
-letter-spacing: 1.5px;
-text-transform: uppercase;
-cursor: pointer;
-background: #2a2933;
-color: #666;
-transition: all 0.15s;
-}
-.diff-btn.active { background: #f5c542; color: #1c1b22; }
-
+/* ── STATS ── */
 .stats {
-width: 100%;
-max-width: 420px;
-display: flex;
-justify-content: center;
-gap: 28px;
-padding: 4px 16px 8px;
+width: 100%; max-width: 440px;
+display: flex; justify-content: center; gap: 28px;
+padding: 2px 16px 8px;
 }
-.stat { font-size: 11px; color: #666; letter-spacing: 1px; text-transform: uppercase; }
-.stat b { color: #f0ebe0; font-weight: 700; }
+.stat { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #555; }
+.stat b { color: #ddd; font-weight: 700; }
 
-/* BOARD */
-.board-wrap {
-width: 100%;
-max-width: 420px;
+/* ── BOARD ── */
+.board-outer {
+width: 100%; max-width: 440px;
 padding: 0 12px;
 }
 
+/* The board is a table — most reliable cross-browser cell borders */
 #board {
 width: 100%;
 aspect-ratio: 1;
-display: grid;
-grid-template-columns: repeat(9, 1fr);
-grid-template-rows: repeat(9, 1fr);
+border-collapse: collapse;
 border: 3px solid #f5c542;
-border-radius: 12px;
+border-radius: 10px;
 overflow: hidden;
-/* gap creates thin lines between cells */
-background: #2e2c38;
-gap: 1px;
+table-layout: fixed;
+/* Safari border-radius on table fix */
+border-spacing: 0;
+background: #18171f;
 }
 
-.cell {
-background: #23222a;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: clamp(14px, 4.2vw, 20px);
+#board td {
+background: #22212b;
+border: 1px solid #333140;
+text-align: center;
+vertical-align: middle;
+font-size: clamp(14px, 4vw, 20px);
 font-weight: 600;
 cursor: pointer;
-position: relative;
 user-select: none;
+position: relative;
+padding: 0;
+/* height is derived from aspect-ratio of table */
+width: 11.11%;
 }
 
-/* thick 3x3 box borders via border on cells */
-.cell[data-col=“3”], .cell[data-col=“6”] { border-left: 2px solid #f5c542; }
-.cell[data-row=“3”], .cell[data-row=“6”] { border-top: 2px solid #f5c542; }
+/* thick 3×3 box borders */
+#board td.bl { border-left:   2.5px solid #f5c542; }
+#board td.bt { border-top:    2.5px solid #f5c542; }
 
-.cell.given  { color: #f0ebe0; font-weight: 700; }
-.cell.player { color: #f5c542; }
-.cell.error  { color: #ff5f5f; background: #2e1f1f !important; }
-.cell.selected { background: #3d3860 !important; }
-.cell.peer   { background: #272631; }
-.cell.same   { background: #322f4a; }
+#board td.given  { color: #f0ebe0; font-weight: 800; }
+#board td.player { color: #f5c542; font-weight: 700; }
+#board td.error  { color: #ff5c5c; background: #2d1a1a !important; }
+#board td.sel    { background: #3a3660 !important; }
+#board td.peer   { background: #272535; }
+#board td.same   { background: #302d4a; }
 
 /* notes */
-.notes-grid {
+.ng {
 display: grid;
 grid-template-columns: repeat(3,1fr);
 grid-template-rows: repeat(3,1fr);
-width: 100%;
-height: 100%;
+width: 100%; height: 100%;
+position: absolute; inset: 0;
 padding: 1px;
 }
-.note-cell {
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: clamp(6px, 1.4vw, 8px);
-font-weight: 500;
-color: #a89ecd;
-line-height: 1;
+.nc {
+display: flex; align-items: center; justify-content: center;
+font-size: clamp(5px, 1.2vw, 8px);
+font-weight: 600; color: #9b8fcc; line-height: 1;
 }
 
-/* CONTROLS */
-.controls {
-width: 100%;
-max-width: 420px;
-display: flex;
-justify-content: space-around;
-padding: 10px 16px 4px;
+/* ── CONTROLS ── */
+.ctrls {
+width: 100%; max-width: 440px;
+display: flex; justify-content: space-around;
+padding: 10px 14px 4px;
 }
 .ctrl { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.ctrl-btn {
-width: 48px;
-height: 44px;
-background: #2a2933;
-border: none;
-border-radius: 12px;
-color: #f0ebe0;
-font-size: 20px;
-display: flex;
-align-items: center;
-justify-content: center;
-cursor: pointer;
-transition: all 0.12s;
+.cbtn {
+width: 50px; height: 44px;
+background: #222130; border: 1.5px solid #2e2c3a; border-radius: 12px;
+color: #f0ebe0; font-size: 20px; display: flex; align-items: center;
+justify-content: center; cursor: pointer; transition: transform .1s;
 }
-.ctrl-btn:active { transform: scale(0.88); }
-.ctrl-btn.on { background: #f5c542; color: #1c1b22; }
-.ctrl-label {
-font-size: 9px;
-font-weight: 600;
-letter-spacing: 1px;
-text-transform: uppercase;
-color: #555;
-}
+.cbtn:active { transform: scale(.88); }
+.cbtn.on { background: #f5c542; color: #18171f; border-color: #f5c542; }
+.clabel { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #444; }
 
-/* NUMPAD */
+/* ── NUMPAD ── */
 .numpad {
-width: 100%;
-max-width: 420px;
-display: grid;
-grid-template-columns: repeat(9, 1fr);
-gap: 5px;
-padding: 6px 12px 24px;
+width: 100%; max-width: 440px;
+display: grid; grid-template-columns: repeat(9,1fr);
+gap: 5px; padding: 6px 12px 28px;
 }
-.num-btn {
+.nbtn {
 aspect-ratio: 1;
-background: #2a2933;
-border: none;
-border-radius: 10px;
-color: #f0ebe0;
-font-size: clamp(15px, 4vw, 20px);
-font-weight: 700;
-cursor: pointer;
-display: flex;
-align-items: center;
-justify-content: center;
-transition: all 0.1s;
-font-family: -apple-system, sans-serif;
+background: #222130; border: 1.5px solid #2e2c3a; border-radius: 10px;
+color: #f0ebe0; font-size: clamp(15px, 4vw, 21px);
+font-weight: 800; cursor: pointer;
+display: flex; align-items: center; justify-content: center;
+transition: transform .1s; font-family: -apple-system, sans-serif;
 }
-.num-btn:active { transform: scale(0.88); background: #3a3650; }
-.num-btn.done { opacity: 0.2; pointer-events: none; }
+.nbtn:active { transform: scale(.85); }
+.nbtn.done { opacity: .2; pointer-events: none; }
 
-/* WIN */
-#overlay {
-display: none;
-position: fixed;
-inset: 0;
-background: rgba(28,27,34,0.96);
-z-index: 50;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-gap: 12px;
-padding: 40px;
+/* ── WIN OVERLAY ── */
+#ov {
+display: none; position: fixed; inset: 0;
+background: rgba(24,23,31,.95); z-index: 99;
+flex-direction: column; align-items: center; justify-content: center; gap: 14px;
 }
-#overlay.show { display: flex; }
-.win-emoji { font-size: 60px; }
-.win-title { font-size: 42px; font-weight: 800; color: #f5c542; letter-spacing: -1px; }
-.win-sub { font-size: 13px; color: #888; letter-spacing: 2px; text-transform: uppercase; }
-.win-time { font-size: 40px; font-weight: 300; color: #fff; letter-spacing: 3px; }
-.win-btn {
-margin-top: 12px;
-background: #f5c542;
-color: #1c1b22;
-border: none;
-border-radius: 14px;
-padding: 16px 48px;
-font-size: 14px;
-font-weight: 800;
-letter-spacing: 1px;
-text-transform: uppercase;
-cursor: pointer;
+#ov.show { display: flex; }
+.wemoji { font-size: 64px; }
+.wtitle { font-size: 44px; font-weight: 800; color: #f5c542; letter-spacing: -1px; }
+.wsub { font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #666; }
+.wtime { font-size: 42px; font-weight: 300; color: #fff; letter-spacing: 4px; }
+.wbtn {
+margin-top: 10px; background: #f5c542; color: #18171f;
+border: none; border-radius: 14px; padding: 16px 52px;
+font-size: 14px; font-weight: 800; letter-spacing: 1px;
+text-transform: uppercase; cursor: pointer;
 }
-.win-btn:active { transform: scale(0.96); }
+.wbtn:active { transform: scale(.96); }
 </style>
 
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">Su<span>doku</span></div>
-  <div class="timer-box">
+<div class="hdr">
+  <div class="logo">Su<em>doku</em></div>
+  <div class="hdr-r">
     <div class="timer" id="timer">00:00</div>
-    <div class="diff-label" id="dlabel">Médio</div>
+    <div class="dlabel" id="dlabel">Médio</div>
   </div>
 </div>
 
-<div class="diff-row">
-  <button class="diff-btn" data-d="easy"   onclick="setDiff('easy')">Fácil</button>
-  <button class="diff-btn active" data-d="medium" onclick="setDiff('medium')">Médio</button>
-  <button class="diff-btn" data-d="hard"   onclick="setDiff('hard')">Difícil</button>
+<div class="drow">
+  <button class="dbtn" data-d="easy"   onclick="setDiff('easy')">Fácil</button>
+  <button class="dbtn on" data-d="medium" onclick="setDiff('medium')">Médio</button>
+  <button class="dbtn" data-d="hard"   onclick="setDiff('hard')">Difícil</button>
 </div>
 
 <div class="stats">
@@ -270,138 +196,143 @@ cursor: pointer;
   <div class="stat">Dicas <b id="hnt">3</b></div>
 </div>
 
-<div class="board-wrap"><div id="board"></div></div>
+<div class="board-outer">
+  <table id="board"></table>
+</div>
 
-<div class="controls">
+<div class="ctrls">
   <div class="ctrl">
-    <button class="ctrl-btn" onclick="undo()">↩</button>
-    <div class="ctrl-label">Voltar</div>
+    <button class="cbtn" onclick="undo()">↩</button>
+    <div class="clabel">Voltar</div>
   </div>
   <div class="ctrl">
-    <button class="ctrl-btn" onclick="erase()">⌫</button>
-    <div class="ctrl-label">Apagar</div>
+    <button class="cbtn" onclick="erase()">⌫</button>
+    <div class="clabel">Apagar</div>
   </div>
   <div class="ctrl">
-    <button class="ctrl-btn" id="noteBtn" onclick="toggleNotes()">✎</button>
-    <div class="ctrl-label">Notas</div>
+    <button class="cbtn" id="noteBtn" onclick="toggleNotes()">✎</button>
+    <div class="clabel">Notas</div>
   </div>
   <div class="ctrl">
-    <button class="ctrl-btn" onclick="hint()">💡</button>
-    <div class="ctrl-label">Dica</div>
+    <button class="cbtn" onclick="hint()">💡</button>
+    <div class="clabel">Dica</div>
   </div>
   <div class="ctrl">
-    <button class="ctrl-btn" onclick="newGame()">↺</button>
-    <div class="ctrl-label">Novo</div>
+    <button class="cbtn" onclick="newGame()">↺</button>
+    <div class="clabel">Novo</div>
   </div>
 </div>
 
 <div class="numpad" id="numpad"></div>
 
-<div id="overlay">
-  <div class="win-emoji">🏆</div>
-  <div class="win-title">Parabéns!</div>
-  <div class="win-sub">Tempo final</div>
-  <div class="win-time" id="winTime">00:00</div>
-  <div class="win-sub" id="winErr"></div>
-  <button class="win-btn" onclick="newGame();document.getElementById('overlay').classList.remove('show')">Novo Jogo</button>
+<div id="ov">
+  <div class="wemoji">🏆</div>
+  <div class="wtitle">Parabéns!</div>
+  <div class="wsub">Tempo final</div>
+  <div class="wtime" id="wtime">00:00</div>
+  <div class="wsub" id="werr"></div>
+  <button class="wbtn" onclick="newGame();document.getElementById('ov').classList.remove('show')">Novo Jogo</button>
 </div>
 
 <script>
 let puzzle=[],solution=[],given=[],notes=[],hist=[];
-let sel=-1,noteMode=false,errs=0,hints=3,secs=0,iv;
+let sel=-1, noteMode=false, errs=0, hints=3, secs=0, iv;
 let diff='medium';
-const REMOVE={easy:36,medium:46,hard:54};
+const REMOVE={easy:34,medium:46,hard:55};
 
+/* ── Generator ── */
 function gen(){
   const g=Array(81).fill(0);
-  fill(g);
+  fillG(g);
   const sol=[...g];
-  const cells=shuf([...Array(81).keys()]);
-  for(let i=0;i<REMOVE[diff];i++) g[cells[i]]=0;
+  const idx=shuf([...Array(81).keys()]);
+  for(let i=0;i<REMOVE[diff];i++) g[idx[i]]=0;
   return{puzzle:g,solution:sol};
 }
-function fill(g){
-  const e=g.indexOf(0);
-  if(e<0)return true;
+function fillG(g){
+  const e=g.indexOf(0); if(e<0)return true;
   for(const n of shuf([1,2,3,4,5,6,7,8,9])){
-    if(ok(g,e,n)){g[e]=n;if(fill(g))return true;g[e]=0;}
+    if(valid(g,e,n)){g[e]=n;if(fillG(g))return true;g[e]=0;}
   }
   return false;
 }
-function ok(g,i,n){
+function valid(g,i,n){
   const r=~~(i/9),c=i%9;
   for(let j=0;j<9;j++){
     if(g[r*9+j]===n||g[j*9+c]===n)return false;
-    const br=3*~~(r/3)+~~(j/3),bc=3*~~(c/3)+j%3;
-    if(g[br*9+bc]===n)return false;
+    if(g[(3*~~(r/3)+~~(j/3))*9+(3*~~(c/3)+j%3)]===n)return false;
   }
   return true;
 }
 function shuf(a){for(let i=a.length-1;i>0;i--){const j=~~(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
-function renderBoard(){
-  const b=document.getElementById('board');
-  b.innerHTML='';
-  for(let i=0;i<81;i++){
-    const d=document.createElement('div');
-    d.className='cell';
-    d.dataset.idx=i;
-    d.dataset.row=~~(i/9);
-    d.dataset.col=i%9;
-    d.addEventListener('click',()=>pick(i));
-    b.appendChild(d);
-    paint(i);
+/* ── Build table ── */
+function buildTable(){
+  const tb=document.getElementById('board');
+  tb.innerHTML='';
+  for(let r=0;r<9;r++){
+    const tr=document.createElement('tr');
+    for(let c=0;c<9;c++){
+      const td=document.createElement('td');
+      const i=r*9+c;
+      td.dataset.i=i;
+      if(c===3||c===6) td.classList.add('bl');
+      if(r===3||r===6) td.classList.add('bt');
+      td.addEventListener('click',()=>pick(i));
+      tr.appendChild(td);
+    }
+    tb.appendChild(tr);
   }
-  countNums();
 }
 
-function paint(i){
-  const d=document.querySelector(`.cell[data-idx="${i}"]`);
-  if(!d)return;
-  d.classList.remove('given','player','error');
-  d.innerHTML='';
-  const v=puzzle[i],nt=notes[i];
+/* ── Paint ── */
+function paintCell(i){
+  const td=document.querySelector(`td[data-i="${i}"]`);
+  if(!td)return;
+  td.classList.remove('given','player','error');
+  td.innerHTML='';
+  const v=puzzle[i], nt=notes[i];
   if(v){
-    d.textContent=v;
-    if(given[i])d.classList.add('given');
-    else if(v!==solution[i])d.classList.add('error');
-    else d.classList.add('player');
+    td.textContent=v;
+    if(given[i]) td.classList.add('given');
+    else if(v!==solution[i]) td.classList.add('error');
+    else td.classList.add('player');
   } else if(nt&&nt.some(Boolean)){
     const ng=document.createElement('div');
-    ng.className='notes-grid';
+    ng.className='ng';
     for(let n=1;n<=9;n++){
       const nc=document.createElement('div');
-      nc.className='note-cell';
+      nc.className='nc';
       nc.textContent=nt[n-1]?n:'';
       ng.appendChild(nc);
     }
-    d.appendChild(ng);
+    td.appendChild(ng);
   }
 }
 
+function paintAll(){ for(let i=0;i<81;i++) paintCell(i); }
+
 function hl(){
-  const cells=document.querySelectorAll('.cell');
-  const sr=sel>=0?~~(sel/9):-1,sc=sel>=0?sel%9:-1;
-  const sb=sel>=0?(~~(sr/3)*3+~~(sc/3)):-1;
-  const sv=sel>=0?puzzle[sel]:0;
-  cells.forEach((d,i)=>{
-    d.classList.remove('selected','peer','same');
-    if(i===sel){d.classList.add('selected');return;}
-    if(sel<0)return;
-    const r=~~(i/9),c=i%9,bx=~~(r/3)*3+~~(c/3);
-    if(r===sr||c===sc||bx===sb)d.classList.add('peer');
-    if(sv&&puzzle[i]===sv)d.classList.add('same');
+  document.querySelectorAll('#board td').forEach(td=>{
+    td.classList.remove('sel','peer','same');
+  });
+  if(sel<0)return;
+  const sr=~~(sel/9),sc=sel%9,sb=~~(sr/3)*3+~~(sc/3),sv=puzzle[sel];
+  document.querySelectorAll('#board td').forEach(td=>{
+    const i=+td.dataset.i,r=~~(i/9),c=i%9,b=~~(r/3)*3+~~(c/3);
+    if(i===sel){td.classList.add('sel');return;}
+    if(r===sr||c===sc||b===sb) td.classList.add('peer');
+    if(sv&&puzzle[i]===sv) td.classList.add('same');
   });
 }
 
 function countNums(){
   const cnt=Array(10).fill(0);
   puzzle.forEach(v=>{if(v)cnt[v]++;});
-  document.querySelectorAll('.num-btn').forEach(b=>{
-    b.classList.toggle('done',cnt[+b.dataset.n]>=9);
-  });
+  document.querySelectorAll('.nbtn').forEach(b=>b.classList.toggle('done',cnt[+b.dataset.n]>=9));
 }
 
+/* ── Actions ── */
 function pick(i){ sel=sel===i?-1:i; hl(); }
 
 function input(n){
@@ -410,22 +341,19 @@ function input(n){
     if(!puzzle[sel]){
       if(!notes[sel])notes[sel]=Array(9).fill(false);
       notes[sel][n-1]=!notes[sel][n-1];
-      paint(sel);
+      paintCell(sel);
     }
     return;
   }
   hist.push({i:sel,v:puzzle[sel],n:notes[sel]?[...notes[sel]]:null});
   if(puzzle[sel]===n){ puzzle[sel]=0; }
-  else {
+  else{
     const wasErr=puzzle[sel]&&puzzle[sel]!==solution[sel];
     puzzle[sel]=n;
-    if(n!==solution[sel]&&!wasErr){
-      errs++;
-      document.getElementById('err').textContent=errs;
-    }
+    if(n!==solution[sel]&&!wasErr){ errs++; document.getElementById('err').textContent=errs; }
     clrNotes(sel,n);
   }
-  paint(sel);hl();countNums();checkWin();
+  paintCell(sel); hl(); countNums(); checkWin();
 }
 
 function clrNotes(idx,n){
@@ -441,15 +369,15 @@ function clrNotes(idx,n){
 function erase(){
   if(sel<0||given[sel])return;
   hist.push({i:sel,v:puzzle[sel],n:notes[sel]?[...notes[sel]]:null});
-  puzzle[sel]=0;notes[sel]=Array(9).fill(false);
-  paint(sel);hl();countNums();
+  puzzle[sel]=0; notes[sel]=Array(9).fill(false);
+  paintCell(sel); hl(); countNums();
 }
 
 function undo(){
   if(!hist.length)return;
   const p=hist.pop();
-  puzzle[p.i]=p.v;notes[p.i]=p.n||Array(9).fill(false);
-  paint(p.i);hl();countNums();
+  puzzle[p.i]=p.v; notes[p.i]=p.n||Array(9).fill(false);
+  paintCell(p.i); hl(); countNums();
 }
 
 function toggleNotes(){
@@ -460,54 +388,53 @@ function toggleNotes(){
 function hint(){
   if(hints<=0)return;
   const emp=[];
-  for(let i=0;i<81;i++) if(!given[i]&&puzzle[i]!==solution[i])emp.push(i);
+  for(let i=0;i<81;i++) if(!given[i]&&puzzle[i]!==solution[i]) emp.push(i);
   if(!emp.length)return;
   const idx=emp[~~(Math.random()*emp.length)];
   hist.push({i:idx,v:puzzle[idx],n:notes[idx]?[...notes[idx]]:null});
-  puzzle[idx]=solution[idx];notes[idx]=Array(9).fill(false);
-  hints--;document.getElementById('hnt').textContent=hints;
-  paint(idx);sel=idx;hl();countNums();checkWin();
+  puzzle[idx]=solution[idx]; notes[idx]=Array(9).fill(false);
+  hints--; document.getElementById('hnt').textContent=hints;
+  paintCell(idx); sel=idx; hl(); countNums(); checkWin();
 }
 
-function startTimer(){
-  clearInterval(iv);secs=0;
-  iv=setInterval(()=>{ secs++; document.getElementById('timer').textContent=fmt(secs); },1000);
-}
-
+/* ── Timer ── */
+function startTimer(){ clearInterval(iv); secs=0; iv=setInterval(()=>{ secs++; document.getElementById('timer').textContent=fmt(secs); },1000); }
 function fmt(s){ return String(~~(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
 
+/* ── Win ── */
 function checkWin(){
   for(let i=0;i<81;i++) if(puzzle[i]!==solution[i])return;
   clearInterval(iv);
-  document.getElementById('winTime').textContent=fmt(secs);
-  document.getElementById('winErr').textContent=errs===0?'Sem erros 🎉':errs+(errs===1?' erro':' erros');
-  setTimeout(()=>document.getElementById('overlay').classList.add('show'),500);
+  document.getElementById('wtime').textContent=fmt(secs);
+  document.getElementById('werr').textContent=errs===0?'Sem erros 🎉':errs+(errs===1?' erro':' erros');
+  setTimeout(()=>document.getElementById('ov').classList.add('show'),500);
 }
 
+/* ── New Game ── */
 function setDiff(d){
   diff=d;
-  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('active',b.dataset.d===d));
+  document.querySelectorAll('.dbtn').forEach(b=>b.classList.toggle('on',b.dataset.d===d));
   document.getElementById('dlabel').textContent={easy:'Fácil',medium:'Médio',hard:'Difícil'}[d];
   newGame();
 }
 
 function newGame(){
   const{puzzle:p,solution:s}=gen();
-  puzzle=[...p];solution=[...s];
+  puzzle=[...p]; solution=[...s];
   given=puzzle.map(v=>v!==0);
   notes=Array(81).fill(null).map(()=>Array(9).fill(false));
-  hist=[];sel=-1;errs=0;hints=3;
+  hist=[]; sel=-1; errs=0; hints=3;
   document.getElementById('err').textContent=0;
   document.getElementById('hnt').textContent=3;
-  renderBoard();startTimer();
+  buildTable(); paintAll(); countNums(); startTimer();
 }
 
-// numpad
+/* ── Numpad ── */
 (function(){
   const np=document.getElementById('numpad');
   for(let n=1;n<=9;n++){
     const b=document.createElement('button');
-    b.className='num-btn';b.dataset.n=n;b.textContent=n;
+    b.className='nbtn'; b.dataset.n=n; b.textContent=n;
     b.addEventListener('click',()=>input(n));
     np.appendChild(b);
   }
