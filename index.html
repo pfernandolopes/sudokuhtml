@@ -1,181 +1,177 @@
 <!DOCTYPE html>
 
-<html lang="pt-BR">
+<html lang="pt-BR" style="background:#18171f">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#18171f">
-<title>Sudoku</title>
+<title>Sudoku v5</title>
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
 html, body {
-background: #18171f;
-color: #f0ebe0;
-font-family: -apple-system, ‘Helvetica Neue’, sans-serif;
-min-height: 100dvh;
-display: flex;
-flex-direction: column;
-align-items: center;
-overflow-x: hidden;
+  background:#18171f !important;
+  color:#f0ebe0;
+  font-family:-apple-system,'Helvetica Neue',sans-serif;
+  min-height:100dvh;
+}
+body {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  overflow-x:hidden;
 }
 
-/* ── HEADER ── */
+#vbadge {
+position:fixed; top:8px; right:8px;
+background:#ff3b30; color:#fff;
+font-size:12px; font-weight:800;
+padding:4px 10px; border-radius:20px;
+z-index:999; letter-spacing:1px;
+}
+
 .hdr {
-width: 100%;
-max-width: 440px;
-display: flex;
-justify-content: space-between;
-align-items: flex-end;
-padding: 54px 18px 8px;
+width:100%; max-width:440px;
+display:flex; justify-content:space-between; align-items:flex-end;
+padding:54px 18px 8px;
 }
-.logo { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: #fff; }
-.logo em { font-style: italic; color: #f5c542; }
-.hdr-r { text-align: right; }
-.timer { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
-.dlabel { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #f5c542; }
+.logo { font-size:30px; font-weight:800; letter-spacing:-1px; color:#fff; }
+.logo em { font-style:italic; color:#f5c542; }
+.hdr-r { text-align:right; }
+.timer { font-size:22px; font-weight:700; color:#fff; letter-spacing:2px; font-variant-numeric:tabular-nums; }
+.dlabel { font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#f5c542; }
 
-/* ── DIFFICULTY ── */
 .drow {
-width: 100%; max-width: 440px;
-display: flex; gap: 8px;
-padding: 6px 16px 6px;
+width:100%; max-width:440px;
+display:flex; gap:8px; padding:6px 16px;
 }
 .dbtn {
-flex: 1; padding: 8px 0; border-radius: 10px;
-border: 1.5px solid #2e2c3a; background: #222130;
-color: #555; font-size: 11px; font-weight: 800;
-letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
+flex:1; padding:8px 0; border-radius:10px;
+border:1.5px solid #2e2c3a; background:#222130;
+color:#555; font-size:11px; font-weight:800;
+letter-spacing:1.5px; text-transform:uppercase; cursor:pointer;
 }
-.dbtn.on { background: #f5c542; color: #18171f; border-color: #f5c542; }
+.dbtn.on { background:#f5c542; color:#18171f; border-color:#f5c542; }
 
-/* ── STATS ── */
 .stats {
-width: 100%; max-width: 440px;
-display: flex; justify-content: center; gap: 28px;
-padding: 2px 16px 8px;
+width:100%; max-width:440px;
+display:flex; justify-content:center; gap:28px;
+padding:2px 16px 8px;
 }
-.stat { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #555; }
-.stat b { color: #ddd; font-weight: 700; }
+.stat { font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:#555; }
+.stat b { color:#ddd; }
 
-/* ── BOARD ── */
+/* ── BOARD — plain div grid, explicit pixel size via JS ── */
 .board-outer {
-width: 100%; max-width: 440px;
-padding: 0 12px;
+width:100%;
+max-width:440px;
+padding:0 12px;
 }
 
-/* The board is a table — most reliable cross-browser cell borders */
 #board {
-width: 100%;
-aspect-ratio: 1;
-border-collapse: collapse;
-border: 3px solid #f5c542;
-border-radius: 10px;
-overflow: hidden;
-table-layout: fixed;
-/* Safari border-radius on table fix */
-border-spacing: 0;
-background: #18171f;
+/* width set to 100% of parent; height = width via JS */
+width:100%;
+display:grid;
+grid-template-columns:repeat(9,1fr);
+grid-template-rows:repeat(9,1fr);
+border:3px solid #f5c542;
+border-radius:10px;
+overflow:hidden;
+background:#38364a; /* fills the 1px gaps between cells */
 }
 
-#board td {
-background: #22212b;
-border: 1px solid #333140;
-text-align: center;
-vertical-align: middle;
-font-size: clamp(14px, 4vw, 20px);
-font-weight: 600;
-cursor: pointer;
-user-select: none;
-position: relative;
-padding: 0;
-/* height is derived from aspect-ratio of table */
-width: 11.11%;
+.cell {
+background:#22212b;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:700;
+cursor:pointer;
+user-select:none;
+position:relative;
+/* gap of 1px is supplied by the #board background showing through */
+margin:0.5px;
 }
 
-/* thick 3×3 box borders */
-#board td.bl { border-left:   2.5px solid #f5c542; }
-#board td.bt { border-top:    2.5px solid #f5c542; }
+/* thick 3×3 box borders: remove margin and add explicit border */
+.cell.bl { margin-left:0; border-left:2px solid #f5c542; }
+.cell.bt { margin-top:0; border-top:2px solid #f5c542; }
 
-#board td.given  { color: #f0ebe0; font-weight: 800; }
-#board td.player { color: #f5c542; font-weight: 700; }
-#board td.error  { color: #ff5c5c; background: #2d1a1a !important; }
-#board td.sel    { background: #3a3660 !important; }
-#board td.peer   { background: #272535; }
-#board td.same   { background: #302d4a; }
+.cell.given  { color:#f0ebe0; font-weight:800; }
+.cell.player { color:#f5c542; }
+.cell.error  { color:#ff5c5c !important; background:#2d1a1a !important; }
+.cell.sel    { background:#3a3660 !important; }
+.cell.peer   { background:#272535 !important; }
+.cell.same   { background:#302d4a !important; }
 
 /* notes */
 .ng {
-display: grid;
-grid-template-columns: repeat(3,1fr);
-grid-template-rows: repeat(3,1fr);
-width: 100%; height: 100%;
-position: absolute; inset: 0;
-padding: 1px;
+display:grid;
+grid-template-columns:repeat(3,1fr);
+grid-template-rows:repeat(3,1fr);
+position:absolute; inset:0; padding:1px;
 }
 .nc {
-display: flex; align-items: center; justify-content: center;
-font-size: clamp(5px, 1.2vw, 8px);
-font-weight: 600; color: #9b8fcc; line-height: 1;
+display:flex; align-items:center; justify-content:center;
+font-weight:600; color:#9b8fcc;
 }
 
 /* ── CONTROLS ── */
 .ctrls {
-width: 100%; max-width: 440px;
-display: flex; justify-content: space-around;
-padding: 10px 14px 4px;
+width:100%; max-width:440px;
+display:flex; justify-content:space-around;
+padding:10px 14px 4px;
 }
-.ctrl { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ctrl { display:flex; flex-direction:column; align-items:center; gap:4px; }
 .cbtn {
-width: 50px; height: 44px;
-background: #222130; border: 1.5px solid #2e2c3a; border-radius: 12px;
-color: #f0ebe0; font-size: 20px; display: flex; align-items: center;
-justify-content: center; cursor: pointer; transition: transform .1s;
+width:50px; height:44px;
+background:#222130; border:1.5px solid #2e2c3a; border-radius:12px;
+color:#f0ebe0; font-size:20px;
+display:flex; align-items:center; justify-content:center;
+cursor:pointer; transition:transform .1s;
 }
-.cbtn:active { transform: scale(.88); }
-.cbtn.on { background: #f5c542; color: #18171f; border-color: #f5c542; }
-.clabel { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #444; }
+.cbtn:active { transform:scale(.88); }
+.cbtn.on { background:#f5c542; color:#18171f; border-color:#f5c542; }
+.clabel { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#444; }
 
 /* ── NUMPAD ── */
 .numpad {
-width: 100%; max-width: 440px;
-display: grid; grid-template-columns: repeat(9,1fr);
-gap: 5px; padding: 6px 12px 28px;
+width:100%; max-width:440px;
+display:grid; grid-template-columns:repeat(9,1fr);
+gap:5px; padding:6px 12px 28px;
 }
 .nbtn {
-aspect-ratio: 1;
-background: #222130; border: 1.5px solid #2e2c3a; border-radius: 10px;
-color: #f0ebe0; font-size: clamp(15px, 4vw, 21px);
-font-weight: 800; cursor: pointer;
-display: flex; align-items: center; justify-content: center;
-transition: transform .1s; font-family: -apple-system, sans-serif;
+aspect-ratio:1;
+background:#222130; border:1.5px solid #2e2c3a; border-radius:10px;
+color:#f0ebe0; font-weight:800;
+cursor:pointer; display:flex; align-items:center; justify-content:center;
+font-family:-apple-system,sans-serif; transition:transform .1s;
 }
-.nbtn:active { transform: scale(.85); }
-.nbtn.done { opacity: .2; pointer-events: none; }
+.nbtn:active { transform:scale(.85); }
+.nbtn.done { opacity:.2; pointer-events:none; }
 
-/* ── WIN OVERLAY ── */
+/* ── WIN ── */
 #ov {
-display: none; position: fixed; inset: 0;
-background: rgba(24,23,31,.95); z-index: 99;
-flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+display:none; position:fixed; inset:0;
+background:rgba(24,23,31,.96); z-index:99;
+flex-direction:column; align-items:center; justify-content:center; gap:14px;
 }
-#ov.show { display: flex; }
-.wemoji { font-size: 64px; }
-.wtitle { font-size: 44px; font-weight: 800; color: #f5c542; letter-spacing: -1px; }
-.wsub { font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #666; }
-.wtime { font-size: 42px; font-weight: 300; color: #fff; letter-spacing: 4px; }
+#ov.show { display:flex; }
+.wemoji { font-size:64px; }
+.wtitle { font-size:44px; font-weight:800; color:#f5c542; letter-spacing:-1px; }
+.wsub { font-size:12px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#666; }
+.wtime { font-size:42px; font-weight:300; color:#fff; letter-spacing:4px; }
 .wbtn {
-margin-top: 10px; background: #f5c542; color: #18171f;
-border: none; border-radius: 14px; padding: 16px 52px;
-font-size: 14px; font-weight: 800; letter-spacing: 1px;
-text-transform: uppercase; cursor: pointer;
+margin-top:10px; background:#f5c542; color:#18171f;
+border:none; border-radius:14px; padding:16px 52px;
+font-size:14px; font-weight:800; letter-spacing:1px;
+text-transform:uppercase; cursor:pointer;
 }
-.wbtn:active { transform: scale(.96); }
 </style>
 
 </head>
 <body>
+
+<div id="vbadge">v5 ✓</div>
 
 <div class="hdr">
   <div class="logo">Su<em>doku</em></div>
@@ -197,30 +193,15 @@ text-transform: uppercase; cursor: pointer;
 </div>
 
 <div class="board-outer">
-  <table id="board"></table>
+  <div id="board"></div>
 </div>
 
 <div class="ctrls">
-  <div class="ctrl">
-    <button class="cbtn" onclick="undo()">↩</button>
-    <div class="clabel">Voltar</div>
-  </div>
-  <div class="ctrl">
-    <button class="cbtn" onclick="erase()">⌫</button>
-    <div class="clabel">Apagar</div>
-  </div>
-  <div class="ctrl">
-    <button class="cbtn" id="noteBtn" onclick="toggleNotes()">✎</button>
-    <div class="clabel">Notas</div>
-  </div>
-  <div class="ctrl">
-    <button class="cbtn" onclick="hint()">💡</button>
-    <div class="clabel">Dica</div>
-  </div>
-  <div class="ctrl">
-    <button class="cbtn" onclick="newGame()">↺</button>
-    <div class="clabel">Novo</div>
-  </div>
+  <div class="ctrl"><button class="cbtn" onclick="undo()">↩</button><div class="clabel">Voltar</div></div>
+  <div class="ctrl"><button class="cbtn" onclick="erase()">⌫</button><div class="clabel">Apagar</div></div>
+  <div class="ctrl"><button class="cbtn" id="noteBtn" onclick="toggleNotes()">✎</button><div class="clabel">Notas</div></div>
+  <div class="ctrl"><button class="cbtn" onclick="hint()">💡</button><div class="clabel">Dica</div></div>
+  <div class="ctrl"><button class="cbtn" onclick="newGame()">↺</button><div class="clabel">Novo</div></div>
 </div>
 
 <div class="numpad" id="numpad"></div>
@@ -235,12 +216,25 @@ text-transform: uppercase; cursor: pointer;
 </div>
 
 <script>
+// ── fix board height = board width ──
+function fixBoardSize() {
+  const b = document.getElementById('board');
+  const w = b.offsetWidth;
+  b.style.height = w + 'px';
+  // font size = ~40% of cell size
+  const cellPx = Math.floor(w / 9);
+  const fs = Math.floor(cellPx * 0.48);
+  b.style.fontSize = fs + 'px';
+  // note font
+  document.querySelectorAll('.nc').forEach(n => n.style.fontSize = Math.max(6, Math.floor(cellPx * 0.26)) + 'px');
+}
+window.addEventListener('resize', fixBoardSize);
+
 let puzzle=[],solution=[],given=[],notes=[],hist=[];
-let sel=-1, noteMode=false, errs=0, hints=3, secs=0, iv;
+let sel=-1,noteMode=false,errs=0,hints=3,secs=0,iv;
 let diff='medium';
 const REMOVE={easy:34,medium:46,hard:55};
 
-/* ── Generator ── */
 function gen(){
   const g=Array(81).fill(0);
   fillG(g);
@@ -266,63 +260,61 @@ function valid(g,i,n){
 }
 function shuf(a){for(let i=a.length-1;i>0;i--){const j=~~(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
-/* ── Build table ── */
-function buildTable(){
-  const tb=document.getElementById('board');
-  tb.innerHTML='';
-  for(let r=0;r<9;r++){
-    const tr=document.createElement('tr');
-    for(let c=0;c<9;c++){
-      const td=document.createElement('td');
-      const i=r*9+c;
-      td.dataset.i=i;
-      if(c===3||c===6) td.classList.add('bl');
-      if(r===3||r===6) td.classList.add('bt');
-      td.addEventListener('click',()=>pick(i));
-      tr.appendChild(td);
-    }
-    tb.appendChild(tr);
+function buildBoard(){
+  const b=document.getElementById('board');
+  b.innerHTML='';
+  for(let i=0;i<81;i++){
+    const d=document.createElement('div');
+    d.className='cell';
+    d.dataset.i=i;
+    const r=~~(i/9),c=i%9;
+    if(c===3||c===6) d.classList.add('bl');
+    if(r===3||r===6) d.classList.add('bt');
+    d.addEventListener('click',()=>pick(i));
+    b.appendChild(d);
   }
+  fixBoardSize();
 }
 
-/* ── Paint ── */
 function paintCell(i){
-  const td=document.querySelector(`td[data-i="${i}"]`);
-  if(!td)return;
-  td.classList.remove('given','player','error');
-  td.innerHTML='';
-  const v=puzzle[i], nt=notes[i];
+  const d=document.querySelector(`#board .cell[data-i="${i}"]`);
+  if(!d)return;
+  d.classList.remove('given','player','error');
+  d.innerHTML='';
+  const v=puzzle[i],nt=notes[i];
   if(v){
-    td.textContent=v;
-    if(given[i]) td.classList.add('given');
-    else if(v!==solution[i]) td.classList.add('error');
-    else td.classList.add('player');
+    d.textContent=v;
+    if(given[i]) d.classList.add('given');
+    else if(v!==solution[i]) d.classList.add('error');
+    else d.classList.add('player');
   } else if(nt&&nt.some(Boolean)){
     const ng=document.createElement('div');
     ng.className='ng';
+    const b=document.getElementById('board');
+    const cellPx=Math.floor(b.offsetWidth/9);
+    const nfs=Math.max(6,Math.floor(cellPx*0.26))+'px';
     for(let n=1;n<=9;n++){
       const nc=document.createElement('div');
       nc.className='nc';
+      nc.style.fontSize=nfs;
       nc.textContent=nt[n-1]?n:'';
       ng.appendChild(nc);
     }
-    td.appendChild(ng);
+    d.appendChild(ng);
   }
 }
 
 function paintAll(){ for(let i=0;i<81;i++) paintCell(i); }
 
 function hl(){
-  document.querySelectorAll('#board td').forEach(td=>{
-    td.classList.remove('sel','peer','same');
-  });
+  document.querySelectorAll('#board .cell').forEach(d=>d.classList.remove('sel','peer','same'));
   if(sel<0)return;
   const sr=~~(sel/9),sc=sel%9,sb=~~(sr/3)*3+~~(sc/3),sv=puzzle[sel];
-  document.querySelectorAll('#board td').forEach(td=>{
-    const i=+td.dataset.i,r=~~(i/9),c=i%9,b=~~(r/3)*3+~~(c/3);
-    if(i===sel){td.classList.add('sel');return;}
-    if(r===sr||c===sc||b===sb) td.classList.add('peer');
-    if(sv&&puzzle[i]===sv) td.classList.add('same');
+  document.querySelectorAll('#board .cell').forEach(d=>{
+    const i=+d.dataset.i,r=~~(i/9),c=i%9,b=~~(r/3)*3+~~(c/3);
+    if(i===sel){d.classList.add('sel');return;}
+    if(r===sr||c===sc||b===sb) d.classList.add('peer');
+    if(sv&&puzzle[i]===sv) d.classList.add('same');
   });
 }
 
@@ -332,7 +324,6 @@ function countNums(){
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.toggle('done',cnt[+b.dataset.n]>=9));
 }
 
-/* ── Actions ── */
 function pick(i){ sel=sel===i?-1:i; hl(); }
 
 function input(n){
@@ -397,11 +388,9 @@ function hint(){
   paintCell(idx); sel=idx; hl(); countNums(); checkWin();
 }
 
-/* ── Timer ── */
 function startTimer(){ clearInterval(iv); secs=0; iv=setInterval(()=>{ secs++; document.getElementById('timer').textContent=fmt(secs); },1000); }
 function fmt(s){ return String(~~(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
 
-/* ── Win ── */
 function checkWin(){
   for(let i=0;i<81;i++) if(puzzle[i]!==solution[i])return;
   clearInterval(iv);
@@ -410,7 +399,6 @@ function checkWin(){
   setTimeout(()=>document.getElementById('ov').classList.add('show'),500);
 }
 
-/* ── New Game ── */
 function setDiff(d){
   diff=d;
   document.querySelectorAll('.dbtn').forEach(b=>b.classList.toggle('on',b.dataset.d===d));
@@ -426,10 +414,10 @@ function newGame(){
   hist=[]; sel=-1; errs=0; hints=3;
   document.getElementById('err').textContent=0;
   document.getElementById('hnt').textContent=3;
-  buildTable(); paintAll(); countNums(); startTimer();
+  buildBoard(); paintAll(); countNums(); startTimer();
 }
 
-/* ── Numpad ── */
+// numpad
 (function(){
   const np=document.getElementById('numpad');
   for(let n=1;n<=9;n++){
