@@ -217,6 +217,8 @@ text-transform:uppercase; cursor:pointer;
 </head>
 <body>
 
+<div id="vbadge" style="position:fixed;top:8px;right:8px;background:#ff3b30;color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;z-index:999;letter-spacing:1px;">v6 ✓</div>
+
 <div class="hdr">
   <div class="logo">Su<em>doku</em></div>
   <div class="hdr-r">
@@ -564,14 +566,56 @@ function toggleNotes(){
   document.getElementById('noteBtn').classList.toggle('on',noteMode);
 }
 
+// ── Logical hint: finds the most constrained empty cell ──
+function getCandidates(g, i){
+  if(g[i]!==0) return [];
+  const r=~~(i/9), c=i%9;
+  const used=new Set();
+  for(let j=0;j<9;j++){
+    used.add(g[r*9+j]);
+    used.add(g[j*9+c]);
+    used.add(g[(3*~~(r/3)+~~(j/3))*9+(3*~~(c/3)+j%3)]);
+  }
+  const cands=[];
+  for(let n=1;n<=9;n++) if(!used.has(n)) cands.push(n);
+  return cands;
+}
+
+function findLogicalHint(){
+  // Strategy 1: Naked single — cell with only 1 candidate
+  let bestIdx=-1, bestCands=null, bestCount=10;
+  for(let i=0;i<81;i++){
+    if(given[i]||puzzle[i]===solution[i]) continue;
+    // use current puzzle state (may have wrong entries — work from solution perspective)
+    const g=solution; // we always hint toward solution
+    const cands=getCandidates(puzzle,i);
+    // naked single: only one candidate fits in this cell
+    if(cands.length===1){ bestIdx=i; bestCands=cands; break; }
+    // track cell with fewest candidates for fallback
+    if(cands.length>0 && cands.length<bestCount){
+      bestCount=cands.length; bestIdx=i; bestCands=cands;
+    }
+  }
+
+  if(bestIdx<0){
+    // All wrong cells have no candidates in current state — puzzle may have wrong entries
+    // Fall back: find any unsolved cell
+    for(let i=0;i<81;i++){
+      if(!given[i]&&puzzle[i]!==solution[i]){ bestIdx=i; break; }
+    }
+  }
+
+  return bestIdx;
+}
+
 function hint(){
-  if(hints<=0)return;
-  const emp=[];
-  for(let i=0;i<81;i++) if(!given[i]&&puzzle[i]!==solution[i]) emp.push(i);
-  if(!emp.length)return;
-  const idx=emp[~~(Math.random()*emp.length)];
+  if(hints<=0) return;
+  const idx=findLogicalHint();
+  if(idx<0) return;
   hist.push({i:idx,v:puzzle[idx],n:notes[idx]?[...notes[idx]]:null});
   puzzle[idx]=solution[idx]; notes[idx]=Array(9).fill(false);
+  // also clear wrong entries that block peers (optional quality-of-life)
+  clrNotes(idx, solution[idx]);
   hints--; document.getElementById('hnt').textContent=hints;
   paintCell(idx); sel=idx; hl(); countNums(); saveGame(); checkWin();
 }
