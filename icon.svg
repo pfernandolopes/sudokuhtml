@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#18171f"/>
+  <!-- 3x3 grid lines -->
+  <!-- outer border -->
+  <rect x="60" y="60" width="392" height="392" rx="16" fill="none" stroke="#f5c542" stroke-width="16"/>
+  <!-- inner box lines -->
+  <line x1="191" y1="60" x2="191" y2="452" stroke="#f5c542" stroke-width="8"/>
+  <line x1="321" y1="60" x2="321" y2="452" stroke="#f5c542" stroke-width="8"/>
+  <line x1="60" y1="191" x2="452" y2="191" stroke="#f5c542" stroke-width="8"/>
+  <line x1="60" y1="321" x2="452" y2="321" stroke="#f5c542" stroke-width="8"/>
+  <!-- sample numbers -->
+  <text x="108" y="160" text-anchor="middle" font-family="Helvetica Neue,sans-serif" font-size="80" font-weight="800" fill="#f0ebe0">5</text>
+  <text x="256" y="160" text-anchor="middle" font-family="Helvetica Neue,sans-serif" font-size="80" font-weight="800" fill="#f5c542">3</text>
+  <text x="404" y="160" text-anchor="middle" font-family="Helvetica Neue,sans-serif" font-size="80" font-weight="800" fill="#f0ebe0">8</text>
+  <text x="108" y="290" text-anchor="middle" font-family="Helvetica Neue,sans-serif" font-size="80" font-weight="800" fill="#f5c542">1</text>
+  <text x="256" y="290" text-anchor="middle" font-family="Helvetica Neue,sans-serif" font-size="80" font-weight="800" fill="#f0ebe0">9</text>
+  <text x="404" y="290" text-anchor="middle" font-family="Helvetica Neue,sans-serif" font-size="80" font-weight="800" fill="#f5c542">4</text>
+  <text x="108" y="420" text-anchor="middle" font-family="Helvetica Neue,sans-serif" font-size="80" font-weight="800" fill="#f0ebe0">7</text>
+  <text x="256" y="420" text-anchor="middle" font-family="Helvetica Neue,sans-serif" font-size="80" font-weight="800" fill="#f5c542">6</text>
+  <text x="404" y="420" text-anchor="middle" font-family="Helvetica Neue,sans-serif" font-size="80" font-weight="800" fill="#f0ebe0">2</text>
+</svg>
