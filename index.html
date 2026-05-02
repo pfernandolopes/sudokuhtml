@@ -5,6 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#18171f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Sudoku">
+<link rel="manifest" href="manifest.json">
 <title>Sudoku</title>
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -687,6 +691,22 @@ function newGame(){
 // ── Auto-save on exit ──
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveGame(); });
 window.addEventListener('pagehide', saveGame);
+
+// ── Service Worker (PWA offline) ──
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// ── Wake Lock (keep screen on) ──
+let wakeLock=null;
+async function requestWakeLock(){
+  if(!('wakeLock' in navigator)) return;
+  try{ wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
+}
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState==='visible') await requestWakeLock();
+});
+requestWakeLock();
 
 // ── Boot ──
 (function(){
