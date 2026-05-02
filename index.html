@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#18171f">
-<title>Sudoku v5</title>
+<title>Sudoku</title>
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html, body {
@@ -15,20 +15,11 @@ html, body {
   min-height:100dvh;
 }
 body {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+  display:flex; flex-direction:column; align-items:center;
   overflow-x:hidden;
 }
 
-#vbadge {
-position:fixed; top:8px; right:8px;
-background:#ff3b30; color:#fff;
-font-size:12px; font-weight:800;
-padding:4px 10px; border-radius:20px;
-z-index:999; letter-spacing:1px;
-}
-
+/* ── HEADER ── */
 .hdr {
 width:100%; max-width:440px;
 display:flex; justify-content:space-between; align-items:flex-end;
@@ -40,9 +31,27 @@ padding:54px 18px 8px;
 .timer { font-size:22px; font-weight:700; color:#fff; letter-spacing:2px; font-variant-numeric:tabular-nums; }
 .dlabel { font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#f5c542; }
 
-.drow {
+/* ── TABS ── */
+.tabs {
 width:100%; max-width:440px;
-display:flex; gap:8px; padding:6px 16px;
+display:flex; border-bottom:1px solid #2e2c3a;
+padding:0 16px; gap:0;
+}
+.tab {
+flex:1; padding:10px 0; text-align:center;
+font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase;
+color:#555; cursor:pointer; border-bottom:2px solid transparent;
+transition:all .15s;
+}
+.tab.on { color:#f5c542; border-bottom-color:#f5c542; }
+
+/* ── GAME PANEL ── */
+#gamePanel { width:100%; max-width:440px; display:flex; flex-direction:column; align-items:center; }
+#histPanel { width:100%; max-width:440px; display:none; flex-direction:column; padding:12px 16px 28px; gap:10px; }
+
+/* ── DIFFICULTY ── */
+.drow {
+width:100%; display:flex; gap:8px; padding:8px 16px 6px;
 }
 .dbtn {
 flex:1; padding:8px 0; border-radius:10px;
@@ -52,23 +61,17 @@ letter-spacing:1.5px; text-transform:uppercase; cursor:pointer;
 }
 .dbtn.on { background:#f5c542; color:#18171f; border-color:#f5c542; }
 
+/* ── STATS ── */
 .stats {
-width:100%; max-width:440px;
-display:flex; justify-content:center; gap:28px;
+width:100%; display:flex; justify-content:center; gap:28px;
 padding:2px 16px 8px;
 }
 .stat { font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:#555; }
 .stat b { color:#ddd; }
 
-/* ── BOARD — plain div grid, explicit pixel size via JS ── */
-.board-outer {
-width:100%;
-max-width:440px;
-padding:0 12px;
-}
-
+/* ── BOARD ── */
+.board-outer { width:100%; padding:0 12px; }
 #board {
-/* width set to 100% of parent; height = width via JS */
 width:100%;
 display:grid;
 grid-template-columns:repeat(9,1fr);
@@ -76,49 +79,28 @@ grid-template-rows:repeat(9,1fr);
 border:3px solid #f5c542;
 border-radius:10px;
 overflow:hidden;
-background:#38364a; /* fills the 1px gaps between cells */
+background:#38364a;
 }
-
 .cell {
 background:#22212b;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:700;
-cursor:pointer;
-user-select:none;
-position:relative;
-/* gap of 1px is supplied by the #board background showing through */
-margin:0.5px;
+display:flex; align-items:center; justify-content:center;
+font-weight:700; cursor:pointer; user-select:none;
+position:relative; margin:0.5px;
 }
-
-/* thick 3×3 box borders: remove margin and add explicit border */
 .cell.bl { margin-left:0; border-left:2px solid #f5c542; }
 .cell.bt { margin-top:0; border-top:2px solid #f5c542; }
-
 .cell.given  { color:#f0ebe0; font-weight:800; }
 .cell.player { color:#f5c542; }
 .cell.error  { color:#ff5c5c !important; background:#2d1a1a !important; }
 .cell.sel    { background:#3a3660 !important; }
 .cell.peer   { background:#272535 !important; }
 .cell.same   { background:#302d4a !important; }
-
-/* notes */
-.ng {
-display:grid;
-grid-template-columns:repeat(3,1fr);
-grid-template-rows:repeat(3,1fr);
-position:absolute; inset:0; padding:1px;
-}
-.nc {
-display:flex; align-items:center; justify-content:center;
-font-weight:600; color:#9b8fcc;
-}
+.ng { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); position:absolute; inset:0; padding:1px; }
+.nc { display:flex; align-items:center; justify-content:center; font-weight:600; color:#9b8fcc; }
 
 /* ── CONTROLS ── */
 .ctrls {
-width:100%; max-width:440px;
-display:flex; justify-content:space-around;
+width:100%; display:flex; justify-content:space-around;
 padding:10px 14px 4px;
 }
 .ctrl { display:flex; flex-direction:column; align-items:center; gap:4px; }
@@ -135,9 +117,8 @@ cursor:pointer; transition:transform .1s;
 
 /* ── NUMPAD ── */
 .numpad {
-width:100%; max-width:440px;
-display:grid; grid-template-columns:repeat(9,1fr);
-gap:5px; padding:6px 12px 28px;
+width:100%; display:grid; grid-template-columns:repeat(9,1fr);
+gap:5px; padding:6px 12px 20px;
 }
 .nbtn {
 aspect-ratio:1;
@@ -148,6 +129,71 @@ font-family:-apple-system,sans-serif; transition:transform .1s;
 }
 .nbtn:active { transform:scale(.85); }
 .nbtn.done { opacity:.2; pointer-events:none; }
+
+/* ── RESUME BANNER ── */
+#resumeBanner {
+display:none; width:100%;
+background:#2a2840; border:1.5px solid #f5c542;
+border-radius:12px; margin:0 0 8px;
+padding:12px 16px;
+flex-direction:row; align-items:center; justify-content:space-between; gap:10px;
+}
+#resumeBanner.show { display:flex; }
+.rb-text { font-size:12px; color:#ccc; line-height:1.4; }
+.rb-text b { color:#f5c542; }
+.rb-btns { display:flex; gap:8px; flex-shrink:0; }
+.rb-btn {
+padding:7px 14px; border-radius:8px; border:none;
+font-size:11px; font-weight:800; letter-spacing:1px;
+text-transform:uppercase; cursor:pointer;
+}
+.rb-btn.yes { background:#f5c542; color:#18171f; }
+.rb-btn.no  { background:#333; color:#aaa; }
+
+/* ── HISTORY ── */
+.hist-title {
+font-size:13px; font-weight:800; letter-spacing:2px;
+text-transform:uppercase; color:#f5c542; padding:4px 0 2px;
+}
+.hist-empty { font-size:13px; color:#444; text-align:center; padding:40px 0; }
+.hist-summary {
+display:flex; gap:10px; flex-wrap:wrap;
+padding:4px 0 8px; border-bottom:1px solid #2e2c3a;
+}
+.hs-box {
+flex:1; min-width:80px;
+background:#222130; border-radius:10px; padding:10px 12px;
+text-align:center;
+}
+.hs-val { font-size:22px; font-weight:800; color:#f5c542; }
+.hs-lbl { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#555; margin-top:2px; }
+
+.hist-card {
+background:#222130; border-radius:12px; padding:14px 16px;
+display:flex; align-items:center; justify-content:space-between; gap:8px;
+}
+.hc-left { display:flex; flex-direction:column; gap:3px; }
+.hc-diff {
+font-size:9px; font-weight:800; letter-spacing:2px;
+text-transform:uppercase;
+}
+.hc-diff.easy   { color:#4cd964; }
+.hc-diff.medium { color:#f5c542; }
+.hc-diff.hard   { color:#ff5c5c; }
+.hc-date { font-size:11px; color:#555; }
+.hc-right { text-align:right; }
+.hc-time { font-size:20px; font-weight:700; color:#fff; letter-spacing:1px; }
+.hc-errs { font-size:11px; color:#555; margin-top:2px; }
+.hc-perfect { font-size:10px; color:#4cd964; font-weight:700; letter-spacing:1px; }
+
+.clear-btn {
+margin-top:4px; padding:10px; border-radius:10px;
+border:1.5px solid #2e2c3a; background:transparent;
+color:#555; font-size:11px; font-weight:800;
+letter-spacing:1.5px; text-transform:uppercase; cursor:pointer;
+width:100%;
+}
+.clear-btn:active { background:#2e2c3a; }
 
 /* ── WIN ── */
 #ov {
@@ -171,8 +217,6 @@ text-transform:uppercase; cursor:pointer;
 </head>
 <body>
 
-<div id="vbadge">v5 ✓</div>
-
 <div class="hdr">
   <div class="logo">Su<em>doku</em></div>
   <div class="hdr-r">
@@ -181,30 +225,57 @@ text-transform:uppercase; cursor:pointer;
   </div>
 </div>
 
-<div class="drow">
-  <button class="dbtn" data-d="easy"   onclick="setDiff('easy')">Fácil</button>
-  <button class="dbtn on" data-d="medium" onclick="setDiff('medium')">Médio</button>
-  <button class="dbtn" data-d="hard"   onclick="setDiff('hard')">Difícil</button>
+<div class="tabs">
+  <div class="tab on" onclick="showTab('game')">Jogo</div>
+  <div class="tab"    onclick="showTab('hist')">Histórico</div>
 </div>
 
-<div class="stats">
-  <div class="stat">Erros <b id="err">0</b></div>
-  <div class="stat">Dicas <b id="hnt">3</b></div>
+<!-- GAME -->
+
+<div id="gamePanel">
+  <div id="resumeBanner">
+    <div class="rb-text">Partida salva encontrada!<br><b id="rbInfo"></b></div>
+    <div class="rb-btns">
+      <button class="rb-btn yes" onclick="resumeGame()">Continuar</button>
+      <button class="rb-btn no"  onclick="dismissResume()">Nova</button>
+    </div>
+  </div>
+
+  <div class="drow">
+    <button class="dbtn" data-d="easy"   onclick="setDiff('easy')">Fácil</button>
+    <button class="dbtn on" data-d="medium" onclick="setDiff('medium')">Médio</button>
+    <button class="dbtn" data-d="hard"   onclick="setDiff('hard')">Difícil</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat">Erros <b id="err">0</b></div>
+    <div class="stat">Dicas <b id="hnt">3</b></div>
+  </div>
+
+  <div class="board-outer"><div id="board"></div></div>
+
+  <div class="ctrls">
+    <div class="ctrl"><button class="cbtn" onclick="undo()">↩</button><div class="clabel">Voltar</div></div>
+    <div class="ctrl"><button class="cbtn" onclick="erase()">⌫</button><div class="clabel">Apagar</div></div>
+    <div class="ctrl"><button class="cbtn" id="noteBtn" onclick="toggleNotes()">✎</button><div class="clabel">Notas</div></div>
+    <div class="ctrl"><button class="cbtn" onclick="hint()">💡</button><div class="clabel">Dica</div></div>
+    <div class="ctrl"><button class="cbtn" onclick="newGame()">↺</button><div class="clabel">Novo</div></div>
+  </div>
+
+  <div class="numpad" id="numpad"></div>
 </div>
 
-<div class="board-outer">
-  <div id="board"></div>
+<!-- HISTORY -->
+
+<div id="histPanel">
+  <div class="hist-title">Estatísticas</div>
+  <div class="hist-summary" id="histSummary"></div>
+  <div class="hist-title" style="margin-top:8px">Partidas</div>
+  <div id="histList"></div>
+  <button class="clear-btn" onclick="clearHistory()">Limpar histórico</button>
 </div>
 
-<div class="ctrls">
-  <div class="ctrl"><button class="cbtn" onclick="undo()">↩</button><div class="clabel">Voltar</div></div>
-  <div class="ctrl"><button class="cbtn" onclick="erase()">⌫</button><div class="clabel">Apagar</div></div>
-  <div class="ctrl"><button class="cbtn" id="noteBtn" onclick="toggleNotes()">✎</button><div class="clabel">Notas</div></div>
-  <div class="ctrl"><button class="cbtn" onclick="hint()">💡</button><div class="clabel">Dica</div></div>
-  <div class="ctrl"><button class="cbtn" onclick="newGame()">↺</button><div class="clabel">Novo</div></div>
-</div>
-
-<div class="numpad" id="numpad"></div>
+<!-- WIN -->
 
 <div id="ov">
   <div class="wemoji">🏆</div>
@@ -216,25 +287,28 @@ text-transform:uppercase; cursor:pointer;
 </div>
 
 <script>
-// ── fix board height = board width ──
-function fixBoardSize() {
-  const b = document.getElementById('board');
-  const w = b.offsetWidth;
-  b.style.height = w + 'px';
-  // font size = ~40% of cell size
-  const cellPx = Math.floor(w / 9);
-  const fs = Math.floor(cellPx * 0.48);
-  b.style.fontSize = fs + 'px';
-  // note font
-  document.querySelectorAll('.nc').forEach(n => n.style.fontSize = Math.max(6, Math.floor(cellPx * 0.26)) + 'px');
-}
-window.addEventListener('resize', fixBoardSize);
+// ── Storage keys ──
+const SAVE_KEY = 'sudoku_save';
+const HIST_KEY = 'sudoku_history';
 
+// ── State ──
 let puzzle=[],solution=[],given=[],notes=[],hist=[];
 let sel=-1,noteMode=false,errs=0,hints=3,secs=0,iv;
 let diff='medium';
+let pendingSave = null; // saved game waiting for user choice
 const REMOVE={easy:34,medium:46,hard:55};
 
+// ── Board sizing ──
+function fixBoardSize(){
+  const b=document.getElementById('board');
+  const w=b.offsetWidth;
+  b.style.height=w+'px';
+  const cellPx=Math.floor(w/9);
+  b.style.fontSize=Math.floor(cellPx*.48)+'px';
+}
+window.addEventListener('resize',fixBoardSize);
+
+// ── Generator ──
 function gen(){
   const g=Array(81).fill(0);
   fillG(g);
@@ -260,13 +334,130 @@ function valid(g,i,n){
 }
 function shuf(a){for(let i=a.length-1;i>0;i--){const j=~~(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
+// ── Save / Load current game ──
+function saveGame(){
+  if(puzzle.length===0)return;
+  const state={
+    puzzle:[...puzzle], solution:[...solution],
+    given:[...given], notes:notes.map(n=>[...n]),
+    hist:hist.map(h=>({...h,n:h.n?[...h.n]:null})),
+    sel, noteMode, errs, hints, secs, diff
+  };
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+function loadSavedGame(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw)return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+
+function clearSavedGame(){
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+}
+
+function resumeGame(){
+  if(!pendingSave)return;
+  const s=pendingSave; pendingSave=null;
+  hideBanner();
+  puzzle=[...s.puzzle]; solution=[...s.solution];
+  given=[...s.given]; notes=s.notes.map(n=>[...n]);
+  hist=s.hist.map(h=>({...h,n:h.n?[...h.n]:null}));
+  sel=s.sel; noteMode=s.noteMode; errs=s.errs; hints=s.hints; secs=s.secs; diff=s.diff;
+  document.getElementById('err').textContent=errs;
+  document.getElementById('hnt').textContent=hints;
+  document.getElementById('dlabel').textContent={easy:'Fácil',medium:'Médio',hard:'Difícil'}[diff];
+  document.querySelectorAll('.dbtn').forEach(b=>b.classList.toggle('on',b.dataset.d===diff));
+  document.getElementById('noteBtn').classList.toggle('on',noteMode);
+  buildBoard(); paintAll(); countNums();
+  startTimer(secs);
+}
+
+function dismissResume(){
+  pendingSave=null;
+  hideBanner();
+  clearSavedGame();
+  startFreshGame();
+}
+
+function hideBanner(){ document.getElementById('resumeBanner').classList.remove('show'); }
+
+// ── History ──
+function getHistory(){
+  try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch(e){ return []; }
+}
+function saveHistory(h){
+  try{ localStorage.setItem(HIST_KEY,JSON.stringify(h)); }catch(e){}
+}
+function addToHistory(entry){
+  const h=getHistory();
+  h.unshift(entry);
+  if(h.length>100) h.length=100;
+  saveHistory(h);
+}
+function clearHistory(){
+  if(!confirm('Limpar todo o histórico?'))return;
+  saveHistory([]);
+  renderHistory();
+}
+
+function renderHistory(){
+  const h=getHistory();
+  const listEl=document.getElementById('histList');
+  const sumEl=document.getElementById('histSummary');
+
+  if(h.length===0){
+    sumEl.innerHTML='';
+    listEl.innerHTML='<div class="hist-empty">Nenhuma partida concluída ainda.</div>';
+    return;
+  }
+
+  // summary
+  const wins=h.length;
+  const best=h.reduce((b,e)=>e.secs<b?e.secs:b, Infinity);
+  const avgErr=Math.round(h.reduce((s,e)=>s+e.errs,0)/h.length);
+  const perfects=h.filter(e=>e.errs===0).length;
+  sumEl.innerHTML=`
+    <div class="hs-box"><div class="hs-val">${wins}</div><div class="hs-lbl">Partidas</div></div>
+    <div class="hs-box"><div class="hs-val">${fmt(best)}</div><div class="hs-lbl">Recorde</div></div>
+    <div class="hs-box"><div class="hs-val">${avgErr}</div><div class="hs-lbl">Erros/jogo</div></div>
+    <div class="hs-box"><div class="hs-val">${perfects}</div><div class="hs-lbl">Perfeitas</div></div>
+  `;
+
+  // list
+  listEl.innerHTML=h.map(e=>`
+    <div class="hist-card">
+      <div class="hc-left">
+        <div class="hc-diff ${e.diff}">${{easy:'Fácil',medium:'Médio',hard:'Difícil'}[e.diff]}</div>
+        <div class="hc-date">${e.date}</div>
+      </div>
+      <div class="hc-right">
+        <div class="hc-time">${fmt(e.secs)}</div>
+        ${e.errs===0
+          ? '<div class="hc-perfect">✓ Sem erros</div>'
+          : `<div class="hc-errs">${e.errs} erro${e.errs===1?'':'s'}</div>`}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Tabs ──
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('on',i===(t==='game'?0:1)));
+  document.getElementById('gamePanel').style.display = t==='game'?'flex':'none';
+  document.getElementById('histPanel').style.display = t==='hist'?'flex':'none';
+  if(t==='hist') renderHistory();
+}
+
+// ── Board ──
 function buildBoard(){
   const b=document.getElementById('board');
   b.innerHTML='';
   for(let i=0;i<81;i++){
     const d=document.createElement('div');
-    d.className='cell';
-    d.dataset.i=i;
+    d.className='cell'; d.dataset.i=i;
     const r=~~(i/9),c=i%9;
     if(c===3||c===6) d.classList.add('bl');
     if(r===3||r===6) d.classList.add('bt');
@@ -288,16 +479,12 @@ function paintCell(i){
     else if(v!==solution[i]) d.classList.add('error');
     else d.classList.add('player');
   } else if(nt&&nt.some(Boolean)){
-    const ng=document.createElement('div');
-    ng.className='ng';
-    const b=document.getElementById('board');
-    const cellPx=Math.floor(b.offsetWidth/9);
-    const nfs=Math.max(6,Math.floor(cellPx*0.26))+'px';
+    const ng=document.createElement('div'); ng.className='ng';
+    const cellPx=Math.floor(document.getElementById('board').offsetWidth/9);
+    const nfs=Math.max(6,Math.floor(cellPx*.26))+'px';
     for(let n=1;n<=9;n++){
-      const nc=document.createElement('div');
-      nc.className='nc';
-      nc.style.fontSize=nfs;
-      nc.textContent=nt[n-1]?n:'';
+      const nc=document.createElement('div'); nc.className='nc';
+      nc.style.fontSize=nfs; nc.textContent=nt[n-1]?n:'';
       ng.appendChild(nc);
     }
     d.appendChild(ng);
@@ -324,6 +511,7 @@ function countNums(){
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.toggle('done',cnt[+b.dataset.n]>=9));
 }
 
+// ── Actions ──
 function pick(i){ sel=sel===i?-1:i; hl(); }
 
 function input(n){
@@ -344,7 +532,7 @@ function input(n){
     if(n!==solution[sel]&&!wasErr){ errs++; document.getElementById('err').textContent=errs; }
     clrNotes(sel,n);
   }
-  paintCell(sel); hl(); countNums(); checkWin();
+  paintCell(sel); hl(); countNums(); saveGame(); checkWin();
 }
 
 function clrNotes(idx,n){
@@ -361,14 +549,14 @@ function erase(){
   if(sel<0||given[sel])return;
   hist.push({i:sel,v:puzzle[sel],n:notes[sel]?[...notes[sel]]:null});
   puzzle[sel]=0; notes[sel]=Array(9).fill(false);
-  paintCell(sel); hl(); countNums();
+  paintCell(sel); hl(); countNums(); saveGame();
 }
 
 function undo(){
   if(!hist.length)return;
   const p=hist.pop();
   puzzle[p.i]=p.v; notes[p.i]=p.n||Array(9).fill(false);
-  paintCell(p.i); hl(); countNums();
+  paintCell(p.i); hl(); countNums(); saveGame();
 }
 
 function toggleNotes(){
@@ -385,28 +573,45 @@ function hint(){
   hist.push({i:idx,v:puzzle[idx],n:notes[idx]?[...notes[idx]]:null});
   puzzle[idx]=solution[idx]; notes[idx]=Array(9).fill(false);
   hints--; document.getElementById('hnt').textContent=hints;
-  paintCell(idx); sel=idx; hl(); countNums(); checkWin();
+  paintCell(idx); sel=idx; hl(); countNums(); saveGame(); checkWin();
 }
 
-function startTimer(){ clearInterval(iv); secs=0; iv=setInterval(()=>{ secs++; document.getElementById('timer').textContent=fmt(secs); },1000); }
+// ── Timer ──
+function startTimer(fromSecs=0){
+  clearInterval(iv); secs=fromSecs;
+  document.getElementById('timer').textContent=fmt(secs);
+  iv=setInterval(()=>{ secs++; document.getElementById('timer').textContent=fmt(secs); saveGame(); },1000);
+}
 function fmt(s){ return String(~~(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
 
+// ── Win ──
 function checkWin(){
   for(let i=0;i<81;i++) if(puzzle[i]!==solution[i])return;
   clearInterval(iv);
+  clearSavedGame();
+
+  // save to history
+  const now=new Date();
+  addToHistory({
+    diff, secs, errs,
+    date: now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
+  });
+
   document.getElementById('wtime').textContent=fmt(secs);
   document.getElementById('werr').textContent=errs===0?'Sem erros 🎉':errs+(errs===1?' erro':' erros');
   setTimeout(()=>document.getElementById('ov').classList.add('show'),500);
 }
 
+// ── New / Set Diff ──
 function setDiff(d){
   diff=d;
   document.querySelectorAll('.dbtn').forEach(b=>b.classList.toggle('on',b.dataset.d===d));
   document.getElementById('dlabel').textContent={easy:'Fácil',medium:'Médio',hard:'Difícil'}[d];
-  newGame();
+  clearSavedGame();
+  startFreshGame();
 }
 
-function newGame(){
+function startFreshGame(){
   const{puzzle:p,solution:s}=gen();
   puzzle=[...p]; solution=[...s];
   given=puzzle.map(v=>v!==0);
@@ -414,10 +619,17 @@ function newGame(){
   hist=[]; sel=-1; errs=0; hints=3;
   document.getElementById('err').textContent=0;
   document.getElementById('hnt').textContent=3;
-  buildBoard(); paintAll(); countNums(); startTimer();
+  document.getElementById('noteBtn').classList.remove('on');
+  noteMode=false;
+  buildBoard(); paintAll(); countNums(); startTimer(0);
 }
 
-// numpad
+function newGame(){
+  clearSavedGame();
+  startFreshGame();
+}
+
+// ── Numpad ──
 (function(){
   const np=document.getElementById('numpad');
   for(let n=1;n<=9;n++){
@@ -428,7 +640,26 @@ function newGame(){
   }
 })();
 
-newGame();
+// ── Auto-save on exit ──
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveGame(); });
+window.addEventListener('pagehide', saveGame);
+
+// ── Boot ──
+(function(){
+  const saved=loadSavedGame();
+  if(saved && saved.puzzle && saved.puzzle.some(v=>v===0)){
+    pendingSave=saved;
+    // show banner with info
+    const elapsed=fmt(saved.secs);
+    const dname={easy:'Fácil',medium:'Médio',hard:'Difícil'}[saved.diff]||'—';
+    document.getElementById('rbInfo').textContent=`${dname} · ${elapsed} jogados`;
+    document.getElementById('resumeBanner').classList.add('show');
+    // start a fresh game behind the banner
+    startFreshGame();
+  } else {
+    startFreshGame();
+  }
+})();
 </script>
 
 </body>
