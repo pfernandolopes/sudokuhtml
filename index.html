@@ -221,7 +221,7 @@ text-transform:uppercase; cursor:pointer;
 </head>
 <body>
 
-<div id="vbadge" style="position:fixed;top:8px;right:8px;background:#ff3b30;color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;z-index:999;letter-spacing:1px;">v6 ✓</div>
+<div id="vbadge" style="position:fixed;top:8px;right:8px;background:#ff3b30;color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;z-index:999;letter-spacing:1px;">v7 ✓</div>
 
 <div class="hdr">
   <div class="logo">Su<em>doku</em></div>
@@ -296,6 +296,31 @@ text-transform:uppercase; cursor:pointer;
 // ── Storage keys ──
 const SAVE_KEY = 'sudoku_save';
 const HIST_KEY = 'sudoku_history';
+
+// ── IndexedDB backup for history (persists in Chrome iOS PWA) ──
+let idb = null;
+function openIDB(){
+  return new Promise((res,rej)=>{
+    const req = indexedDB.open('sudoku_db', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('kv');
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = () => res(null);
+  });
+}
+async function idbSet(key, val){
+  if(!idb) idb = await openIDB();
+  if(!idb) return;
+  idb.transaction('kv','readwrite').objectStore('kv').put(val, key);
+}
+async function idbGet(key){
+  if(!idb) idb = await openIDB();
+  if(!idb) return null;
+  return new Promise(res=>{
+    const req = idb.transaction('kv').objectStore('kv').get(key);
+    req.onsuccess = () => res(req.result ?? null);
+    req.onerror = () => res(null);
+  });
+}
 
 // ── State ──
 let puzzle=[],solution=[],given=[],notes=[],hist=[];
@@ -390,27 +415,38 @@ function dismissResume(){
 
 function hideBanner(){ document.getElementById('resumeBanner').classList.remove('show'); }
 
-// ── History ──
-function getHistory(){
-  try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch(e){ return []; }
+// ── History — salva em localStorage E IndexedDB para garantir persistência no PWA ──
+async function getHistory(){
+  // Try localStorage first (fast)
+  try{
+    const ls = localStorage.getItem(HIST_KEY);
+    if(ls) return JSON.parse(ls);
+  }catch(e){}
+  // Fallback to IndexedDB
+  try{
+    const val = await idbGet(HIST_KEY);
+    if(val) return val;
+  }catch(e){}
+  return [];
 }
-function saveHistory(h){
-  try{ localStorage.setItem(HIST_KEY,JSON.stringify(h)); }catch(e){}
+async function saveHistory(h){
+  try{ localStorage.setItem(HIST_KEY, JSON.stringify(h)); }catch(e){}
+  try{ await idbSet(HIST_KEY, h); }catch(e){}
 }
-function addToHistory(entry){
-  const h=getHistory();
+async function addToHistory(entry){
+  const h = await getHistory();
   h.unshift(entry);
   if(h.length>100) h.length=100;
-  saveHistory(h);
+  await saveHistory(h);
 }
-function clearHistory(){
+async function clearHistory(){
   if(!confirm('Limpar todo o histórico?'))return;
-  saveHistory([]);
+  await saveHistory([]);
   renderHistory();
 }
 
-function renderHistory(){
-  const h=getHistory();
+async function renderHistory(){
+  const h = await getHistory();
   const listEl=document.getElementById('histList');
   const sumEl=document.getElementById('histSummary');
 
@@ -420,7 +456,6 @@ function renderHistory(){
     return;
   }
 
-  // summary
   const wins=h.length;
   const best=h.reduce((b,e)=>e.secs<b?e.secs:b, Infinity);
   const avgErr=Math.round(h.reduce((s,e)=>s+e.errs,0)/h.length);
@@ -432,7 +467,6 @@ function renderHistory(){
     <div class="hs-box"><div class="hs-val">${perfects}</div><div class="hs-lbl">Perfeitas</div></div>
   `;
 
-  // list
   listEl.innerHTML=h.map(e=>`
     <div class="hist-card">
       <div class="hc-left">
@@ -689,7 +723,16 @@ function newGame(){
 })();
 
 // ── Auto-save on exit ──
-document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveGame(); });
+document.addEventListener('visibilitychange', async () => {
+  if(document.hidden){
+    saveGame();
+  } else {
+    // Re-acquire wake lock when app comes back to foreground
+    if('wakeLock' in navigator){
+      try{ wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
+    }
+  }
+});
 window.addEventListener('pagehide', saveGame);
 
 // ── Service Worker (PWA offline) ──
@@ -698,14 +741,11 @@ if('serviceWorker' in navigator){
 }
 
 // ── Wake Lock (keep screen on) ──
-let wakeLock=null;
+let wakeLock = null;
 async function requestWakeLock(){
   if(!('wakeLock' in navigator)) return;
-  try{ wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
+  try{ wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
 }
-document.addEventListener('visibilitychange',async()=>{
-  if(document.visibilityState==='visible') await requestWakeLock();
-});
 requestWakeLock();
 
 // ── Boot ──
